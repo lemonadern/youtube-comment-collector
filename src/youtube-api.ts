@@ -147,29 +147,31 @@ export class YouTubeAPIClient {
 
       for (const thread of response.items) {
         const topLevelComment = thread.snippet.topLevelComment;
-
-        // トップレベルコメントを追加
-        allComments.push(this.convertToCommentData(
-          topLevelComment,
-          thread.snippet.totalReplyCount,
-        ));
-        totalProcessed++;
+        const replies: CommentData[] = [];
 
         // 返信コメントがある場合
         if (thread.replies && thread.replies.comments.length > 0) {
           // APIレスポンスに含まれる返信コメントを追加
           for (const reply of thread.replies.comments) {
-            allComments.push(this.convertToCommentData(reply));
+            replies.push(this.convertToCommentData(reply));
             totalProcessed++;
           }
 
           // まだ取得していない返信コメントがある場合
           if (thread.snippet.totalReplyCount > thread.replies.comments.length) {
             const remainingReplies = await this.getAllReplies(topLevelComment.id);
-            allComments.push(...remainingReplies);
+            replies.push(...remainingReplies);
             totalProcessed += remainingReplies.length;
           }
         }
+
+        // トップレベルコメントを返信と一緒に追加
+        allComments.push(this.convertToCommentData(
+          topLevelComment,
+          thread.snippet.totalReplyCount,
+          replies,
+        ));
+        totalProcessed++;
       }
 
       pageToken = response.nextPageToken;
@@ -181,7 +183,15 @@ export class YouTubeAPIClient {
       });
     } while (pageToken);
 
-    console.log(`収集完了: 合計 ${allComments.length} 件のコメント`);
+    console.log(`収集完了: 合計 ${allComments.length} 件のトップレベルコメント`);
+
+    // 全体のコメント数を計算（トップレベル + 返信）
+    const totalComments = allComments.reduce(
+      (sum, comment) => sum + 1 + (comment.replies?.length || 0),
+      0,
+    );
+    console.log(`収集完了: 合計 ${totalComments} 件のコメント（返信含む）`);
+
     return allComments;
   }
 
@@ -211,6 +221,7 @@ export class YouTubeAPIClient {
   private convertToCommentData(
     comment: Comment,
     totalReplyCount?: number,
+    replies?: CommentData[],
   ): CommentData {
     const snippet = comment.snippet;
 
@@ -225,7 +236,7 @@ export class YouTubeAPIClient {
       updatedAt: snippet.updatedAt,
       likeCount: snippet.likeCount,
       totalReplyCount: totalReplyCount,
-      parentId: snippet.parentId,
+      replies: replies,
     };
   }
 

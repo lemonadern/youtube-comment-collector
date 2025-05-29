@@ -20,8 +20,14 @@ export async function saveCommentsToFile(
     const jsonContent = JSON.stringify(comments, null, 2);
     await Deno.writeTextFile(filepath, jsonContent);
 
+    // 総コメント数を計算（トップレベル + 返信）
+    const totalComments = comments.reduce(
+      (sum, comment) => sum + 1 + (comment.replies?.length || 0),
+      0,
+    );
+
     console.log(`✓ コメントデータを保存しました: ${filepath}`);
-    console.log(`  総コメント数: ${comments.length}`);
+    console.log(`  総コメント数: ${totalComments}`);
     console.log(`  ファイルサイズ: ${(jsonContent.length / 1024 / 1024).toFixed(2)} MB`);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
@@ -43,19 +49,38 @@ export function displayProgress(progress: { processedComments: number; currentOp
  * コメント統計情報を表示
  */
 export function displayCommentStats(comments: CommentData[]) {
-  const topLevelComments = comments.filter((c) => !c.parentId);
-  const replyComments = comments.filter((c) => c.parentId);
-  const totalLikes = comments.reduce((sum, c) => sum + (c.likeCount || 0), 0);
+  // 階層構造での統計計算
+  const topLevelComments = comments.length;
+  const replyComments = comments.reduce((sum, comment) => sum + (comment.replies?.length || 0), 0);
+  const totalComments = topLevelComments + replyComments;
+
+  // 高評価数の計算（トップレベル + 返信）
+  const totalLikes = comments.reduce((sum, comment) => {
+    const topLevelLikes = comment.likeCount || 0;
+    const replyLikes = comment.replies?.reduce((replySum, reply) =>
+      replySum + (reply.likeCount || 0), 0) || 0;
+    return sum + topLevelLikes + replyLikes;
+  }, 0);
 
   console.log("\n📊 コメント統計:");
-  console.log(`  トップレベルコメント: ${topLevelComments.length} 件`);
-  console.log(`  返信コメント: ${replyComments.length} 件`);
-  console.log(`  総コメント数: ${comments.length} 件`);
+  console.log(`  トップレベルコメント: ${topLevelComments} 件`);
+  console.log(`  返信コメント: ${replyComments} 件`);
+  console.log(`  総コメント数: ${totalComments} 件`);
   console.log(`  総高評価数: ${totalLikes} 件`);
 
-  // 最も古いコメントと新しいコメント
+  // 最も古いコメントと新しいコメント（フラット化して検索）
   if (comments.length > 0) {
-    const sortedByDate = comments.sort((a, b) =>
+    const allComments: CommentData[] = [];
+
+    // フラット化
+    for (const comment of comments) {
+      allComments.push(comment);
+      if (comment.replies) {
+        allComments.push(...comment.replies);
+      }
+    }
+
+    const sortedByDate = allComments.sort((a, b) =>
       new Date(a.publishedAt).getTime() - new Date(b.publishedAt).getTime()
     );
     const oldestComment = sortedByDate[0];

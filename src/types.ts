@@ -73,7 +73,7 @@ export interface CommentData {
   updatedAt: string;
   likeCount: number;
   totalReplyCount?: number; // トップレベルコメントのみ
-  parentId?: string; // 返信コメントのみ
+  replies?: CommentData[]; // 返信コメントの配列（トップレベルコメントのみ）
 }
 
 // 進捗情報
