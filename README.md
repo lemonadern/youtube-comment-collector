@@ -1,4 +1,4 @@
-# YouTube Comment Fetcher
+# Youtube Comment Collector
 
 This Deno application fetches all comments (including top-level comments and their replies) from a YouTube video and saves them as a JSON file.
 
@@ -108,7 +108,7 @@ The comment data is saved to a file named `<videoID>_comments.json`.
 ```bash
 $ deno task start dQw4w9WgXcQ
 
-🎬 YouTube Comment Fetcher
+🎬 Youtube Comment Collector
 =====================================
 
 📹 Video: dQw4w9WgXcQ
