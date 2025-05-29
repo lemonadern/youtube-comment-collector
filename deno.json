@@ -1,8 +1,32 @@
 {
+  "version": "1.0.0",
+  "description": "YouTube動画のコメント全件収集ツール",
   "tasks": {
-    "dev": "deno run --watch main.ts"
+    "start": "deno run --allow-net --allow-write --allow-env --allow-read main.ts",
+    "dev": "deno run --watch --allow-net --allow-write --allow-env --allow-read main.ts",
+    "test": "deno test --allow-net --allow-write --allow-env --allow-read"
   },
   "imports": {
-    "@std/assert": "jsr:@std/assert@1"
+    "@std/assert": "jsr:@std/assert@1",
+    "@std/dotenv": "jsr:@std/dotenv@^0.225.5"
+  },
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true
+  },
+  "fmt": {
+    "useTabs": false,
+    "lineWidth": 100,
+    "indentWidth": 2,
+    "semiColons": true,
+    "singleQuote": false,
+    "proseWrap": "preserve"
+  },
+  "lint": {
+    "rules": {
+      "tags": ["recommended"]
+    }
   }
 }
